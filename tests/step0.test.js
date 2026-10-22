@@ -60,3 +60,13 @@ test('STEP 0：方塊材質從 index.html 的相對位置載入素材包', () =>
   assert.match(mainSource, /const textureRoot = ['"]\.\/sky-island-assets\/sky-island-assets\/textures\/16px\//);
   assert.ok(assetRoot.pathname.endsWith('/textures/16px/'));
 });
+
+test('STEP 0：Grass 方塊使用素材包指定的上面、側面與底面貼圖', () => {
+  const mainSource = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+
+  assert.match(mainSource, /grass_top\.png/);
+  assert.match(mainSource, /grass_side\.png/);
+  assert.match(mainSource, /NearestFilter/);
+  assert.match(mainSource, /grassTop/);
+  assert.match(mainSource, /grassSide/);
+});
