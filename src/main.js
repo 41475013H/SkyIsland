@@ -9,7 +9,12 @@ const {
   createInventory,
   collectPickup,
 } = window.SkyIslandStep3;
-const { createPlacementState, selectType, placeBlock } = window.SkyIslandStep4;
+const {
+  createPlacementState,
+  selectTypeByKey,
+  isPlacementButton,
+  placeBlock,
+} = window.SkyIslandStep4;
 const SkyIslandTextures = window.SkyIslandTextures;
 const canvas = document.querySelector('#game');
 const fpsElement = document.querySelector('#fps');
@@ -254,6 +259,11 @@ function placeSelectedBlock() {
 }
 
 function onMouseDown(event) {
+  if (isPlacementButton(event.button)) {
+    event.preventDefault();
+    placeSelectedBlock();
+    return;
+  }
   if (event.button !== 0) return;
   const target = raycastBlock();
   if (!target) return;
@@ -298,8 +308,7 @@ function movePlayer(delta) {
 
 function onKeyDown(event) {
   keys.add(event.code);
-  if (event.code === 'Digit1') selectType(placement, inventory, 'dirt');
-  if (event.code === 'Digit2') selectType(placement, inventory, 'stone');
+  selectTypeByKey(placement, inventory, event.code, event.key);
   if (event.code === 'Space' && player.grounded) {
     player.velocityY = PLAYER_CONFIG.jumpVelocity;
     player.grounded = false;
@@ -316,7 +325,6 @@ canvas.addEventListener('mousedown', onMouseDown);
 window.addEventListener('mouseup', onMouseUp);
 canvas.addEventListener('contextmenu', (event) => {
   event.preventDefault();
-  placeSelectedBlock();
 });
 document.addEventListener('pointerlockchange', () => {
   canvas.classList.toggle('locked', document.pointerLockElement === canvas);

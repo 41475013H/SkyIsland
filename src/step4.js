@@ -11,6 +11,21 @@
     return true;
   }
 
+  function selectTypeByKey(state, inventory, code, key) {
+    const typeByKey = {
+      Digit1: 'dirt',
+      Digit2: 'stone',
+      1: 'dirt',
+      2: 'stone',
+    };
+    const type = typeByKey[code] || typeByKey[key];
+    return type ? selectType(state, inventory, type) : false;
+  }
+
+  function isPlacementButton(button) {
+    return button === 2;
+  }
+
   function isInsideWorld(block) {
     return block.x >= -WORLD_LIMIT / 2
       && block.x < WORLD_LIMIT / 2
@@ -39,5 +54,11 @@
     return destination;
   }
 
-  global.SkyIslandStep4 = Object.freeze({ createPlacementState, selectType, placeBlock });
+  global.SkyIslandStep4 = Object.freeze({
+    createPlacementState,
+    selectType,
+    selectTypeByKey,
+    isPlacementButton,
+    placeBlock,
+  });
 })(typeof window !== 'undefined' ? window : globalThis);
