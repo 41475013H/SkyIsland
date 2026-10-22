@@ -1,5 +1,6 @@
 const THREE = window.THREE;
 const { createIsland, PLAYER_CONFIG } = window.SkyIslandStep0;
+const SkyIslandTextures = window.SkyIslandTextures;
 const canvas = document.querySelector('#game');
 const fpsElement = document.querySelector('#fps');
 
@@ -28,11 +29,13 @@ scene.add(sun);
 const island = createIsland();
 const textureLoader = new THREE.TextureLoader();
 const textureRoot = './sky-island-assets/sky-island-assets/textures/16px/';
+// The file names above document the source asset pack; data URIs make direct file:// launch reliable.
+// Source files: grass_top.png, grass_side.png, dirt.png, stone.png
 const textures = {
-  grassTop: textureLoader.load(`${textureRoot}grass_top.png`),
-  grassSide: textureLoader.load(`${textureRoot}grass_side.png`),
-  dirt: textureLoader.load(`${textureRoot}dirt.png`),
-  stone: textureLoader.load(`${textureRoot}stone.png`),
+  grassTop: textureLoader.load(SkyIslandTextures.grassTop),
+  grassSide: textureLoader.load(SkyIslandTextures.grassSide),
+  dirt: textureLoader.load(SkyIslandTextures.dirt),
+  stone: textureLoader.load(SkyIslandTextures.stone),
 };
 Object.values(textures).forEach((texture) => {
   texture.colorSpace = THREE.SRGBColorSpace;

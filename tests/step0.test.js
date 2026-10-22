@@ -80,3 +80,20 @@ test('STEP 0：直接開啟 file:// 時使用內嵌的素材資料，不依賴�
   assert.match(assetSource, /data:image\/png;base64,/);
   assert.match(mainSource, /SkyIslandTextures/);
 });
+
+test('STEP 0：內嵌素材資料與 sky-island-assets 原檔完全一致', () => {
+  const assetSource = readFileSync(new URL('../src/asset-data.js', import.meta.url), 'utf8');
+  const assetRoot = new URL('../sky-island-assets/sky-island-assets/textures/16px/', import.meta.url);
+  const files = {
+    grassTop: 'grass_top.png',
+    grassSide: 'grass_side.png',
+    dirt: 'dirt.png',
+    stone: 'stone.png',
+  };
+
+  for (const [name, filename] of Object.entries(files)) {
+    const embedded = assetSource.match(new RegExp(`${name}: 'data:image/png;base64,([^']+)'`))?.[1];
+    const source = readFileSync(new URL(filename, assetRoot)).toString('base64');
+    assert.equal(embedded, source, `${filename} 內嵌資料與素材包不一致`);
+  }
+});
