@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
 
-import {
-  WORLD_LIMIT,
-  PLAYER_CONFIG,
-  createIsland,
-} from '../src/step0.js';
+const step0Source = readFileSync(new URL('../src/step0.js', import.meta.url), 'utf8');
+const step0Context = {};
+vm.runInNewContext(step0Source, step0Context);
+const { WORLD_LIMIT, PLAYER_CONFIG, createIsland } = step0Context.SkyIslandStep0;
 
 test('STEP 0：小島三軸範圍不超過 32 格', () => {
   const island = createIsland();
@@ -39,6 +39,14 @@ test('STEP 0：入口頁面使用專案內的 three.js，不依賴 CDN', () => {
 
   assert.match(html, /src="\.\/vendor\/three\.min\.js"/);
   assert.doesNotMatch(html, /cdn\.jsdelivr\.net|unpkg\.com/);
+});
+
+test('STEP 0：直接開啟 index.html 時不依賴本機 ES module 載入', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(html, /type="module"/);
+  assert.match(html, /src="\.\/src\/step0\.js"><\/script>/);
+  assert.match(html, /src="\.\/src\/main\.js"><\/script>/);
 });
 
 test('STEP 0：初始視角朝向小島，而不是朝天空', () => {
