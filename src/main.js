@@ -186,13 +186,14 @@ function updateCamera() {
 
 function raycastBlock() {
   raycaster.setFromCamera(screenCenter, camera);
-  const [hit] = raycaster.intersectObjects(miningMeshes, false);
-  if (!hit || hit.instanceId === undefined) return null;
-  const block = hit.object.userData.blocks[hit.instanceId];
-  if (!block) return null;
+  const targets = [...miningMeshes, ...placedBlockMeshes];
+  const [hit] = raycaster.intersectObjects(targets, false);
+  if (!hit) return null;
+  const block = blockFromIntersection(hit);
+  if (!block || block.removed) return null;
   return {
     mesh: hit.object,
-    instanceId: hit.instanceId,
+    instanceId: Number.isInteger(hit.instanceId) ? hit.instanceId : null,
     block,
     id: `${block.type}:${block.x}:${block.y}:${block.z}`,
   };
@@ -216,9 +217,15 @@ function removeMinedBlock() {
   if (!miningTarget) return;
   miningTarget.block.removed = true;
   spawnDroppedBlock(miningTarget.block);
-  const invisible = new THREE.Matrix4().makeScale(0, 0, 0);
-  miningTarget.mesh.setMatrixAt(miningTarget.instanceId, invisible);
-  miningTarget.mesh.instanceMatrix.needsUpdate = true;
+  if (Number.isInteger(miningTarget.instanceId)) {
+    const invisible = new THREE.Matrix4().makeScale(0, 0, 0);
+    miningTarget.mesh.setMatrixAt(miningTarget.instanceId, invisible);
+    miningTarget.mesh.instanceMatrix.needsUpdate = true;
+  } else {
+    const index = placedBlockMeshes.indexOf(miningTarget.mesh);
+    if (index >= 0) placedBlockMeshes.splice(index, 1);
+    scene.remove(miningTarget.mesh);
+  }
   miningHeld = false;
   miningTarget = null;
   releaseMining(mining);
