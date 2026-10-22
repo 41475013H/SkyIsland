@@ -2,9 +2,18 @@ const THREE = window.THREE;
 const { createIsland, PLAYER_CONFIG } = window.SkyIslandStep0;
 const { MINING_TIMES, createMiningState, beginMining, advanceMining, releaseMining } = window.SkyIslandStep1;
 const { createDrop, advanceDrop } = window.SkyIslandStep2;
+const {
+  createPickup,
+  tryStartPickup,
+  advancePickup,
+  createInventory,
+  collectPickup,
+} = window.SkyIslandStep3;
 const SkyIslandTextures = window.SkyIslandTextures;
 const canvas = document.querySelector('#game');
 const fpsElement = document.querySelector('#fps');
+const dirtCountElement = document.querySelector('#dirt-count');
+const stoneCountElement = document.querySelector('#stone-count');
 
 if (!THREE) {
   document.body.innerHTML = '<div class="runtime-error">three.js 載入失敗，請確認專案內的 vendor/three.min.js 存在。</div>';
@@ -66,6 +75,7 @@ const materials = {
 };
 const blockGeometry = new THREE.BoxGeometry(1, 1, 1);
 const droppedItems = [];
+const inventory = createInventory();
 
 function spawnDroppedBlock(block) {
   const drop = createDrop(block.type, block, island.height);
@@ -73,16 +83,34 @@ function spawnDroppedBlock(block) {
   mesh.scale.setScalar(drop.size);
   mesh.position.set(drop.position.x, drop.position.y, drop.position.z);
   mesh.userData.drop = drop;
+  mesh.userData.pickup = createPickup(block.type, drop.position);
   scene.add(mesh);
-  droppedItems.push({ drop, mesh });
+  droppedItems.push({ drop, pickup: mesh.userData.pickup, mesh });
 }
 
 function updateDroppedBlocks(delta) {
   for (const item of droppedItems) {
     advanceDrop(item.drop, delta);
-    item.mesh.position.set(item.drop.position.x, item.drop.position.y, item.drop.position.z);
+    if (!item.pickup.pickingUp && !item.pickup.collected) {
+      item.pickup.position.x = item.drop.position.x;
+      item.pickup.position.y = item.drop.position.y;
+      item.pickup.position.z = item.drop.position.z;
+      tryStartPickup(item.pickup, player.position);
+    }
+    if (item.pickup.pickingUp) {
+      advancePickup(item.pickup, player.position, delta);
+      item.mesh.position.set(item.pickup.position.x, item.pickup.position.y, item.pickup.position.z);
+    } else {
+      item.mesh.position.set(item.drop.position.x, item.drop.position.y, item.drop.position.z);
+    }
     item.mesh.rotation.set(item.drop.rotation.x, item.drop.rotation.y, item.drop.rotation.z);
+    if (item.pickup.collected) {
+      collectPickup(inventory, item.pickup);
+      scene.remove(item.mesh);
+    }
   }
+  dirtCountElement.textContent = String(inventory.dirt);
+  stoneCountElement.textContent = String(inventory.stone);
 }
 
 const blockGroup = new THREE.Group();
