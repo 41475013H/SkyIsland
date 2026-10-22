@@ -29,19 +29,30 @@ const island = createIsland();
 const textureLoader = new THREE.TextureLoader();
 const textureRoot = './sky-island-assets/sky-island-assets/textures/16px/';
 const textures = {
-  grass: textureLoader.load(`${textureRoot}grass_side.png`),
+  grassTop: textureLoader.load(`${textureRoot}grass_top.png`),
+  grassSide: textureLoader.load(`${textureRoot}grass_side.png`),
   dirt: textureLoader.load(`${textureRoot}dirt.png`),
   stone: textureLoader.load(`${textureRoot}stone.png`),
 };
 Object.values(textures).forEach((texture) => {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.NearestMipmapNearestFilter;
+  texture.minFilter = THREE.NearestFilter;
 });
 
+const grassSideMaterial = new THREE.MeshLambertMaterial({ map: textures.grassSide });
+const grassTopMaterial = new THREE.MeshLambertMaterial({ map: textures.grassTop });
+const dirtMaterial = new THREE.MeshLambertMaterial({ map: textures.dirt });
 const materials = {
-  grass: new THREE.MeshLambertMaterial({ map: textures.grass }),
-  dirt: new THREE.MeshLambertMaterial({ map: textures.dirt }),
+  grass: [
+    grassSideMaterial,
+    grassSideMaterial,
+    grassTopMaterial,
+    dirtMaterial,
+    grassSideMaterial,
+    grassSideMaterial,
+  ],
+  dirt: dirtMaterial,
   stone: new THREE.MeshLambertMaterial({ map: textures.stone }),
 };
 const blockGeometry = new THREE.BoxGeometry(1, 1, 1);
