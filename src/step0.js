@@ -6,6 +6,7 @@ export const PLAYER_CONFIG = Object.freeze({
   gravity: 18,
   eyeHeight: 1.6,
   height: 1.8,
+  initialPitch: 0.2,
 });
 
 export function createIsland() {

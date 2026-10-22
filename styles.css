@@ -50,3 +50,15 @@ body {
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+
+.runtime-error {
+  box-sizing: border-box;
+  width: min(42rem, calc(100% - 2rem));
+  margin: 2rem auto;
+  padding: 1rem 1.25rem;
+  border: 1px solid #f2a7a7;
+  border-radius: 0.65rem;
+  background: #4a2020;
+  color: #fff;
+  font-size: 1rem;
+}

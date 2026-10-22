@@ -4,6 +4,11 @@ const THREE = window.THREE;
 const canvas = document.querySelector('#game');
 const fpsElement = document.querySelector('#fps');
 
+if (!THREE) {
+  document.body.innerHTML = '<div class="runtime-error">three.js 載入失敗，請確認專案內的 vendor/three.min.js 存在。</div>';
+  throw new Error('three.js failed to load from the local vendor file');
+}
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x8fc9e8);
 scene.fog = new THREE.Fog(0x8fc9e8, 35, 90);
@@ -64,7 +69,7 @@ const player = {
   velocityY: 0,
   grounded: false,
   yaw: 0,
-  pitch: -0.18,
+  pitch: PLAYER_CONFIG.initialPitch,
 };
 const keys = new Set();
 
