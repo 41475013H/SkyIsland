@@ -15,6 +15,7 @@ const {
   isPlacementButton,
   placeBlock,
 } = window.SkyIslandStep4;
+const { createClouds, advanceClouds } = window.SkyIslandStep5;
 const SkyIslandTextures = window.SkyIslandTextures;
 const canvas = document.querySelector('#game');
 const fpsElement = document.querySelector('#fps');
@@ -82,6 +83,25 @@ const materials = {
   stone: new THREE.MeshLambertMaterial({ map: textures.stone }),
 };
 const blockGeometry = new THREE.BoxGeometry(1, 1, 1);
+const cloudModels = createClouds();
+const cloudViews = [];
+const cloudGroup = new THREE.Group();
+const cloudGeometry = new THREE.SphereGeometry(1, 10, 6);
+for (const cloud of cloudModels) {
+  const cloudView = new THREE.Group();
+  cloudView.position.set(cloud.position.x, cloud.position.y, cloud.position.z);
+  cloudView.scale.setScalar(cloud.scale);
+  const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: cloud.opacity, depthWrite: false, fog: true });
+  for (const puff of cloud.puffs) {
+    const puffView = new THREE.Mesh(cloudGeometry, cloudMaterial);
+    puffView.position.set(puff.x, puff.y, puff.z);
+    puffView.scale.set(puff.scale * 1.4, puff.scale * 0.65, puff.scale * 0.9);
+    cloudView.add(puffView);
+  }
+  cloudGroup.add(cloudView);
+  cloudViews.push(cloudView);
+}
+scene.add(cloudGroup);
 const droppedItems = [];
 const inventory = createInventory();
 const placement = createPlacementState();
@@ -123,6 +143,13 @@ function updateDroppedBlocks(delta) {
   stoneCountElement.textContent = String(inventory.stone);
   dirtSlotElement.classList.toggle('selected', placement.selectedType === 'dirt');
   stoneSlotElement.classList.toggle('selected', placement.selectedType === 'stone');
+}
+
+function updateClouds(delta) {
+  advanceClouds(cloudModels, delta);
+  cloudModels.forEach((cloud, index) => {
+    cloudViews[index].position.set(cloud.position.x, cloud.position.y, cloud.position.z);
+  });
 }
 
 const blockGroup = new THREE.Group();
@@ -362,6 +389,7 @@ function animate(now) {
   const delta = Math.min((now - lastTime) / 1000, 0.05);
   lastTime = now;
   movePlayer(delta);
+  updateClouds(delta);
   updateDroppedBlocks(delta);
   if (miningHeld && miningTarget) {
     advanceMining(mining, delta);
