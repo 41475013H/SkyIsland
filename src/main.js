@@ -1,6 +1,5 @@
-import { createIsland, PLAYER_CONFIG } from './step0.js';
-
 const THREE = window.THREE;
+const { createIsland, PLAYER_CONFIG } = window.SkyIslandStep0;
 const canvas = document.querySelector('#game');
 const fpsElement = document.querySelector('#fps');
 
