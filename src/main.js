@@ -27,7 +27,7 @@ scene.add(sun);
 
 const island = createIsland();
 const textureLoader = new THREE.TextureLoader();
-const textureRoot = '../sky-island-assets/sky-island-assets/textures/16px/';
+const textureRoot = './sky-island-assets/sky-island-assets/textures/16px/';
 const textures = {
   grass: textureLoader.load(`${textureRoot}grass_side.png`),
   dirt: textureLoader.load(`${textureRoot}dirt.png`),
