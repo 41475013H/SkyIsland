@@ -1,5 +1,6 @@
 const THREE = window.THREE;
 const { createIsland, PLAYER_CONFIG } = window.SkyIslandStep0;
+const { MINING_TIMES, createMiningState, beginMining, advanceMining, releaseMining } = window.SkyIslandStep1;
 const SkyIslandTextures = window.SkyIslandTextures;
 const canvas = document.querySelector('#game');
 const fpsElement = document.querySelector('#fps');
@@ -36,12 +37,16 @@ const textures = {
   grassSide: textureLoader.load(SkyIslandTextures.grassSide),
   dirt: textureLoader.load(SkyIslandTextures.dirt),
   stone: textureLoader.load(SkyIslandTextures.stone),
+  cracks: textureLoader.load(SkyIslandTextures.cracks),
 };
 Object.values(textures).forEach((texture) => {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.magFilter = THREE.NearestFilter;
   texture.minFilter = THREE.NearestFilter;
 });
+textures.cracks.wrapS = THREE.ClampToEdgeWrapping;
+textures.cracks.wrapT = THREE.ClampToEdgeWrapping;
+textures.cracks.repeat.set(0.1, 1);
 
 const grassSideMaterial = new THREE.MeshLambertMaterial({ map: textures.grassSide });
 const grassTopMaterial = new THREE.MeshLambertMaterial({ map: textures.grassTop });
@@ -73,9 +78,30 @@ for (const [type, blocks] of blocksByType) {
     mesh.setMatrixAt(index, matrix);
   });
   mesh.instanceMatrix.needsUpdate = true;
+  mesh.userData.type = type;
+  mesh.userData.blocks = blocks;
   blockGroup.add(mesh);
 }
 scene.add(blockGroup);
+
+const miningMeshes = blockGroup.children.filter((mesh) => Object.hasOwn(MINING_TIMES, mesh.userData.type));
+const raycaster = new THREE.Raycaster();
+const screenCenter = new THREE.Vector2(0, 0);
+const mining = createMiningState();
+const miningOverlay = new THREE.Mesh(
+  blockGeometry,
+  new THREE.MeshBasicMaterial({
+    map: textures.cracks,
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+  }),
+);
+miningOverlay.scale.setScalar(1.02);
+miningOverlay.visible = false;
+scene.add(miningOverlay);
+let miningHeld = false;
+let miningTarget = null;
 
 const player = {
   position: new THREE.Vector3(0, 9.8, 6),
@@ -95,6 +121,66 @@ function updateCamera() {
   camera.position.set(player.position.x, player.position.y, player.position.z);
   camera.rotation.x = player.pitch;
   camera.rotation.y = player.yaw;
+}
+
+function raycastBlock() {
+  raycaster.setFromCamera(screenCenter, camera);
+  const [hit] = raycaster.intersectObjects(miningMeshes, false);
+  if (!hit || hit.instanceId === undefined) return null;
+  const block = hit.object.userData.blocks[hit.instanceId];
+  if (!block) return null;
+  return {
+    mesh: hit.object,
+    instanceId: hit.instanceId,
+    block,
+    id: `${block.type}:${block.x}:${block.y}:${block.z}`,
+  };
+}
+
+function updateMiningOverlay() {
+  if (!miningTarget || mining.crackStage < 0) {
+    miningOverlay.visible = false;
+    return;
+  }
+  miningOverlay.position.set(
+    miningTarget.block.x,
+    miningTarget.block.y + 0.5,
+    miningTarget.block.z,
+  );
+  textures.cracks.offset.x = mining.crackStage * 0.1;
+  miningOverlay.visible = true;
+}
+
+function removeMinedBlock() {
+  if (!miningTarget) return;
+  const invisible = new THREE.Matrix4().makeScale(0, 0, 0);
+  miningTarget.mesh.setMatrixAt(miningTarget.instanceId, invisible);
+  miningTarget.mesh.instanceMatrix.needsUpdate = true;
+  miningHeld = false;
+  miningTarget = null;
+  releaseMining(mining);
+  updateMiningOverlay();
+}
+
+function onMouseDown(event) {
+  if (event.button !== 0) return;
+  const target = raycastBlock();
+  if (!target) return;
+  event.preventDefault();
+  miningHeld = true;
+  miningTarget = target;
+  beginMining(mining, target.id, target.block.type);
+  updateMiningOverlay();
+}
+
+function onMouseUp(event) {
+  if (event.button !== 0 || !miningHeld) return;
+  miningHeld = false;
+  if (!mining.completed) {
+    releaseMining(mining);
+    miningTarget = null;
+    updateMiningOverlay();
+  }
 }
 
 function movePlayer(delta) {
@@ -133,6 +219,9 @@ function onKeyUp(event) {
 }
 
 canvas.addEventListener('click', () => canvas.requestPointerLock());
+canvas.addEventListener('mousedown', onMouseDown);
+window.addEventListener('mouseup', onMouseUp);
+canvas.addEventListener('contextmenu', (event) => event.preventDefault());
 document.addEventListener('pointerlockchange', () => {
   canvas.classList.toggle('locked', document.pointerLockElement === canvas);
 });
@@ -162,6 +251,11 @@ function animate(now) {
   const delta = Math.min((now - lastTime) / 1000, 0.05);
   lastTime = now;
   movePlayer(delta);
+  if (miningHeld && miningTarget) {
+    advanceMining(mining, delta);
+    updateMiningOverlay();
+    if (mining.completed) removeMinedBlock();
+  }
   renderer.render(scene, camera);
   fpsFrames += 1;
   if (now - fpsTime >= 500) {

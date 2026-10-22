@@ -29,6 +29,13 @@
       }
     }
 
+    // STEP 1 的初始測試方塊：放在草坪上，方便玩家一開始就能瞄準挖掘。
+    blocks.push(
+      { type: 'dirt', x: -3, y: height, z: 2 },
+      { type: 'stone', x: 3, y: height, z: 2 },
+      { type: 'dirt', x: 0, y: height, z: -2 },
+    );
+
     return { width, depth, height, blocks };
   }
 
