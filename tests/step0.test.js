@@ -52,3 +52,11 @@ test('STEP 0：直接開啟 index.html 時不依賴本機 ES module 載入', () 
 test('STEP 0：初始視角朝向小島，而不是朝天空', () => {
   assert.ok(PLAYER_CONFIG.initialPitch > 0);
 });
+
+test('STEP 0：方塊材質從 index.html 的相對位置載入素材包', () => {
+  const mainSource = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const assetRoot = new URL('../sky-island-assets/sky-island-assets/textures/16px/', import.meta.url);
+
+  assert.match(mainSource, /const textureRoot = ['"]\.\/sky-island-assets\/sky-island-assets\/textures\/16px\//);
+  assert.ok(assetRoot.pathname.endsWith('/textures/16px/'));
+});
