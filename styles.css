@@ -66,6 +66,17 @@ body {
   pointer-events: none;
 }
 
+#inventory span {
+  padding: 0.15rem 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 0.3rem;
+}
+
+#inventory span.selected {
+  border-color: #fff;
+  background: rgb(255 255 255 / 18%);
+}
+
 .runtime-error {
   box-sizing: border-box;
   width: min(42rem, calc(100% - 2rem));

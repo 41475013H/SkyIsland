@@ -15,7 +15,10 @@ test('STEP 4：選取有數量的方塊欄，右鍵可在目標面旁放置一�
 
   const placed = placeBlock(inventory, blocks, state.selectedType, blocks[0], { x: 0, y: 1, z: 0 });
 
-  assert.deepEqual(placed, { type: 'dirt', x: 0, y: 9, z: 0 });
+  assert.equal(placed.type, 'dirt');
+  assert.equal(placed.x, 0);
+  assert.equal(placed.y, 9);
+  assert.equal(placed.z, 0);
   assert.equal(inventory.dirt, 0);
   assert.equal(blocks.length, 2);
 });

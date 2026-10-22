@@ -9,11 +9,14 @@ const {
   createInventory,
   collectPickup,
 } = window.SkyIslandStep3;
+const { createPlacementState, selectType, placeBlock } = window.SkyIslandStep4;
 const SkyIslandTextures = window.SkyIslandTextures;
 const canvas = document.querySelector('#game');
 const fpsElement = document.querySelector('#fps');
 const dirtCountElement = document.querySelector('#dirt-count');
 const stoneCountElement = document.querySelector('#stone-count');
+const dirtSlotElement = document.querySelector('#dirt-slot');
+const stoneSlotElement = document.querySelector('#stone-slot');
 
 if (!THREE) {
   document.body.innerHTML = '<div class="runtime-error">three.js 載入失敗，請確認專案內的 vendor/three.min.js 存在。</div>';
@@ -76,6 +79,8 @@ const materials = {
 const blockGeometry = new THREE.BoxGeometry(1, 1, 1);
 const droppedItems = [];
 const inventory = createInventory();
+const placement = createPlacementState();
+const placedBlockMeshes = [];
 
 function spawnDroppedBlock(block) {
   const drop = createDrop(block.type, block, island.height);
@@ -111,6 +116,8 @@ function updateDroppedBlocks(delta) {
   }
   dirtCountElement.textContent = String(inventory.dirt);
   stoneCountElement.textContent = String(inventory.stone);
+  dirtSlotElement.classList.toggle('selected', placement.selectedType === 'dirt');
+  stoneSlotElement.classList.toggle('selected', placement.selectedType === 'stone');
 }
 
 const blockGroup = new THREE.Group();
@@ -202,6 +209,7 @@ function updateMiningOverlay() {
 
 function removeMinedBlock() {
   if (!miningTarget) return;
+  miningTarget.block.removed = true;
   spawnDroppedBlock(miningTarget.block);
   const invisible = new THREE.Matrix4().makeScale(0, 0, 0);
   miningTarget.mesh.setMatrixAt(miningTarget.instanceId, invisible);
@@ -210,6 +218,39 @@ function removeMinedBlock() {
   miningTarget = null;
   releaseMining(mining);
   updateMiningOverlay();
+}
+
+function blockFromIntersection(hit) {
+  if (hit.instanceId !== undefined && hit.object.userData.blocks) {
+    return hit.object.userData.blocks[hit.instanceId];
+  }
+  return hit.object.userData.block || null;
+}
+
+function raycastPlacementTarget() {
+  raycaster.setFromCamera(screenCenter, camera);
+  const targets = [...blockGroup.children, ...placedBlockMeshes];
+  const [hit] = raycaster.intersectObjects(targets, false);
+  if (!hit || !hit.face) return null;
+  const block = blockFromIntersection(hit);
+  if (!block || block.removed) return null;
+  const normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
+  normal.set(Math.round(normal.x), Math.round(normal.y), Math.round(normal.z));
+  return { block, normal };
+}
+
+function placeSelectedBlock() {
+  const target = raycastPlacementTarget();
+  if (!target) return;
+  const placed = placeBlock(inventory, island.blocks, placement.selectedType, target.block, target.normal);
+  if (!placed) return;
+  const mesh = new THREE.Mesh(blockGeometry, materials[placed.type]);
+  mesh.position.set(placed.x, placed.y + 0.5, placed.z);
+  mesh.userData.block = placed;
+  scene.add(mesh);
+  placedBlockMeshes.push(mesh);
+  dirtCountElement.textContent = String(inventory.dirt);
+  stoneCountElement.textContent = String(inventory.stone);
 }
 
 function onMouseDown(event) {
@@ -257,11 +298,13 @@ function movePlayer(delta) {
 
 function onKeyDown(event) {
   keys.add(event.code);
+  if (event.code === 'Digit1') selectType(placement, inventory, 'dirt');
+  if (event.code === 'Digit2') selectType(placement, inventory, 'stone');
   if (event.code === 'Space' && player.grounded) {
     player.velocityY = PLAYER_CONFIG.jumpVelocity;
     player.grounded = false;
   }
-  if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space'].includes(event.code)) event.preventDefault();
+  if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'Digit1', 'Digit2'].includes(event.code)) event.preventDefault();
 }
 
 function onKeyUp(event) {
@@ -271,7 +314,10 @@ function onKeyUp(event) {
 canvas.addEventListener('click', () => canvas.requestPointerLock());
 canvas.addEventListener('mousedown', onMouseDown);
 window.addEventListener('mouseup', onMouseUp);
-canvas.addEventListener('contextmenu', (event) => event.preventDefault());
+canvas.addEventListener('contextmenu', (event) => {
+  event.preventDefault();
+  placeSelectedBlock();
+});
 document.addEventListener('pointerlockchange', () => {
   canvas.classList.toggle('locked', document.pointerLockElement === canvas);
 });
