@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   WORLD_LIMIT,
@@ -31,4 +32,15 @@ test('STEP 0：玩家設定支援水平移動與跳躍', () => {
   assert.ok(PLAYER_CONFIG.moveSpeed > 0);
   assert.ok(PLAYER_CONFIG.jumpVelocity > 0);
   assert.ok(PLAYER_CONFIG.gravity > 0);
+});
+
+test('STEP 0：入口頁面使用專案內的 three.js，不依賴 CDN', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+
+  assert.match(html, /src="\.\/vendor\/three\.min\.js"/);
+  assert.doesNotMatch(html, /cdn\.jsdelivr\.net|unpkg\.com/);
+});
+
+test('STEP 0：初始視角朝向小島，而不是朝天空', () => {
+  assert.ok(PLAYER_CONFIG.initialPitch > 0);
 });
