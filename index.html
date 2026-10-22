@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>空中之島</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="hud" aria-live="polite">
+      <strong>空中之島</strong>
+      <span>點擊畫面開始｜WASD 移動｜空白鍵跳躍｜Esc 離開視角控制</span>
+      <span id="fps">FPS: --</span>
+    </div>
+    <div id="crosshair" aria-hidden="true">+</div>
+    <canvas id="game" aria-label="空中之島 3D 遊戲畫面"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
