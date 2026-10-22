@@ -1,6 +1,7 @@
 const THREE = window.THREE;
 const { createIsland, PLAYER_CONFIG } = window.SkyIslandStep0;
 const { MINING_TIMES, createMiningState, beginMining, advanceMining, releaseMining } = window.SkyIslandStep1;
+const { createDrop, advanceDrop } = window.SkyIslandStep2;
 const SkyIslandTextures = window.SkyIslandTextures;
 const canvas = document.querySelector('#game');
 const fpsElement = document.querySelector('#fps');
@@ -64,6 +65,26 @@ const materials = {
   stone: new THREE.MeshLambertMaterial({ map: textures.stone }),
 };
 const blockGeometry = new THREE.BoxGeometry(1, 1, 1);
+const droppedItems = [];
+
+function spawnDroppedBlock(block) {
+  const drop = createDrop(block.type, block, island.height);
+  const mesh = new THREE.Mesh(blockGeometry, materials[block.type]);
+  mesh.scale.setScalar(drop.size);
+  mesh.position.set(drop.position.x, drop.position.y, drop.position.z);
+  mesh.userData.drop = drop;
+  scene.add(mesh);
+  droppedItems.push({ drop, mesh });
+}
+
+function updateDroppedBlocks(delta) {
+  for (const item of droppedItems) {
+    advanceDrop(item.drop, delta);
+    item.mesh.position.set(item.drop.position.x, item.drop.position.y, item.drop.position.z);
+    item.mesh.rotation.set(item.drop.rotation.x, item.drop.rotation.y, item.drop.rotation.z);
+  }
+}
+
 const blockGroup = new THREE.Group();
 const blocksByType = new Map();
 for (const block of island.blocks) {
@@ -153,6 +174,7 @@ function updateMiningOverlay() {
 
 function removeMinedBlock() {
   if (!miningTarget) return;
+  spawnDroppedBlock(miningTarget.block);
   const invisible = new THREE.Matrix4().makeScale(0, 0, 0);
   miningTarget.mesh.setMatrixAt(miningTarget.instanceId, invisible);
   miningTarget.mesh.instanceMatrix.needsUpdate = true;
@@ -251,6 +273,7 @@ function animate(now) {
   const delta = Math.min((now - lastTime) / 1000, 0.05);
   lastTime = now;
   movePlayer(delta);
+  updateDroppedBlocks(delta);
   if (miningHeld && miningTarget) {
     advanceMining(mining, delta);
     updateMiningOverlay();

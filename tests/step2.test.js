@@ -38,7 +38,11 @@ test('STEP 2：小方塊落地後停住，不浮在空中也不穿過地面', ()
   const landedPosition = { ...drop.position };
   const landedRotation = { ...drop.rotation };
   advanceDrop(drop, 1);
-  assert.deepEqual(drop.position, landedPosition);
-  assert.deepEqual(drop.rotation, landedRotation);
+  assert.equal(drop.position.x, landedPosition.x);
+  assert.equal(drop.position.y, landedPosition.y);
+  assert.equal(drop.position.z, landedPosition.z);
+  assert.equal(drop.rotation.x, landedRotation.x);
+  assert.equal(drop.rotation.y, landedRotation.y);
+  assert.equal(drop.rotation.z, landedRotation.z);
   assert.ok(drop.position.y >= floorY + DROP_CONFIG.size / 2);
 });
