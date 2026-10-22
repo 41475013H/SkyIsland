@@ -70,3 +70,13 @@ test('STEP 0：Grass 方塊使用素材包指定的上面、側面與底面貼�
   assert.match(mainSource, /grassTop/);
   assert.match(mainSource, /grassSide/);
 });
+
+test('STEP 0：直接開啟 file:// 時使用內嵌的素材資料，不依賴圖片檔跨來源載入', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const assetSource = readFileSync(new URL('../src/asset-data.js', import.meta.url), 'utf8');
+  const mainSource = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+
+  assert.match(html, /src="\.\/src\/asset-data\.js"><\/script>/);
+  assert.match(assetSource, /data:image\/png;base64,/);
+  assert.match(mainSource, /SkyIslandTextures/);
+});
